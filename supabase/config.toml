@@ -1,0 +1,14 @@
+# Supabase local config (optional). Use Dashboard SQL Editor or: supabase link && supabase db push
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public"]
+
+[db]
+port = 54322
+
+[auth]
+enabled = true
+site_url = "lambdasxi://auth"

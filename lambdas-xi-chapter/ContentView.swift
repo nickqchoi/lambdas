@@ -2,20 +2,106 @@
 //  ContentView.swift
 //  lambdas-xi-chapter
 //
-//  Created by Nicholas Choi on 25/01/2026.
+//  Root router: AppLock §4 → Auth §5 → Profile §6.1 → Main (placeholder).
+//  Debug: Uses Clerk authentication and Clerk user IDs
 //
 
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var unlock = UnlockService.shared
+    @StateObject private var auth = AuthService.shared
+    @StateObject private var profileService = ProfileService.shared
+    @State private var profileComplete: Bool = false
+    @State private var profileChecked: Bool = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        Group {
+            // Debug: App flow: Unlock → Auth → Profile → Main
+            if !unlock.isUnlocked {
+                // Step 1: Invite code unlock
+                AppLockView()
+            } else if !isAuthenticated {
+                // Step 2: Clerk authentication (handles verification states internally)
+                AuthView()
+            } else if !profileComplete {
+                // Step 3: Profile setup (first time users)
+                ProfileSetupView()
+            } else {
+                // Step 4: Main app
+                MainTabView()
+                    .onAppear {
+                        // Debug: Only seed mock data if Supabase is NOT configured
+                        if SupabaseConfig.client == nil, let clerkId = auth.currentUser?.clerkId {
+                            debugLog("ContentView: seeding mock data for development")
+                            profileService.seedMockProfiles(currentClerkUserId: clerkId)
+                            // Note: BountyService and NewsService need similar updates for Clerk IDs
+                            NewsService.shared.seedMockNews()
+                        }
+                    }
+            }
         }
-        .padding()
+        .task(id: auth.currentUser?.clerkId) {
+            // Debug: Fetch profile when user changes
+            await checkProfileCompletion()
+        }
+        .onChange(of: profileService.profileSaveComplete) { _, newValue in
+            // Debug: Re-check profile after save
+            guard newValue else { return }
+            Task {
+                await checkProfileCompletion()
+                debugLog("ContentView: profile re-checked after save, complete=\(profileComplete)")
+            }
+        }
+        .onChange(of: auth.authState) { _, newState in
+            // Debug: Handle auth state changes
+            if case .unauthenticated = newState {
+                profileComplete = false
+                profileChecked = false
+                debugLog("ContentView: user signed out, reset profile state")
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Check if user is fully authenticated (not just in verification flow)
+    /// Debug: Returns true only when user has completed auth flow
+    private var isAuthenticated: Bool {
+        if case .authenticated = auth.authState {
+            return true
+        }
+        return false
+    }
+    
+    // MARK: - Profile Check
+    
+    /// Check if current user's profile is complete
+    /// Debug: Fetches profile from Supabase and validates required fields
+    private func checkProfileCompletion() async {
+        guard let clerkId = auth.currentUser?.clerkId else {
+            // Debug: No user, reset profile state
+            profileComplete = false
+            profileChecked = true
+            debugLog("ContentView: no user, profile not complete")
+            return
+        }
+        
+        debugLog("ContentView: checking profile for clerk_user_id: \(clerkId)")
+        
+        // Fetch profile from Supabase (or cache)
+        let profile = await profileService.fetchProfile(clerkUserId: clerkId)
+        
+        if let p = profile {
+            profileComplete = profileService.isProfileComplete(p)
+            debugLog("ContentView: profile found, complete=\(profileComplete)")
+        } else {
+            // No profile exists yet
+            profileComplete = false
+            debugLog("ContentView: no profile found, needs setup")
+        }
+        
+        profileChecked = true
     }
 }
 

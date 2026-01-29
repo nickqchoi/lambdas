@@ -6,13 +6,54 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		ECD00E4C2F27F56D00F599AC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EC0779C32F26C00100D71EB2 /* Supabase */; };
+		ECD00E932F27F5D600F599AC /* Clerk in Frameworks */ = {isa = PBXBuildFile; productRef = ECD00E922F27F5D600F599AC /* Clerk */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		EC0779B32F26B2B000D71EB2 /* lambdas-xi-chapter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "lambdas-xi-chapter.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		ECF9B8752F2BC63B006A70B9 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
+		ECF9B8772F2BC64F006A70B9 /* CLERK_SETUP_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLERK_SETUP_GUIDE.md; sourceTree = "<group>"; };
+		ECF9B8782F2BC64F006A70B9 /* DEBUG_STEPS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DEBUG_STEPS.md; sourceTree = "<group>"; };
+		ECF9B8792F2BC64F006A70B9 /* design_spec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = design_spec.md; sourceTree = "<group>"; };
+		ECF9B87A2F2BC64F006A70B9 /* MIGRATION_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MIGRATION_SUMMARY.md; sourceTree = "<group>"; };
+		ECF9B87B2F2BC64F006A70B9 /* PRODUCTION_AUTH_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PRODUCTION_AUTH_GUIDE.md; sourceTree = "<group>"; };
+		ECF9B87C2F2BC64F006A70B9 /* QUICK_START.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICK_START.md; sourceTree = "<group>"; };
+		ECF9B87D2F2BC64F006A70B9 /* SUPABASE_SETUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SUPABASE_SETUP.md; sourceTree = "<group>"; };
+		ECF9B87E2F2BC64F006A70B9 /* TEMP_TESTING_SETUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TEMP_TESTING_SETUP.md; sourceTree = "<group>"; };
+		ECF9B87F2F2BC64F006A70B9 /* USERNAME_PASSWORD_SETUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = USERNAME_PASSWORD_SETUP.md; sourceTree = "<group>"; };
+		ECF9B8812F2BC65A006A70B9 /* cli-latest */ = {isa = PBXFileReference; lastKnownFileType = text; path = "cli-latest"; sourceTree = "<group>"; };
+		ECF9B8822F2BC65A006A70B9 /* gotrue-version */ = {isa = PBXFileReference; lastKnownFileType = text; path = "gotrue-version"; sourceTree = "<group>"; };
+		ECF9B8832F2BC65A006A70B9 /* pooler-url */ = {isa = PBXFileReference; lastKnownFileType = text; path = "pooler-url"; sourceTree = "<group>"; };
+		ECF9B8842F2BC65A006A70B9 /* postgres-version */ = {isa = PBXFileReference; lastKnownFileType = text; path = "postgres-version"; sourceTree = "<group>"; };
+		ECF9B8852F2BC65A006A70B9 /* project-ref */ = {isa = PBXFileReference; lastKnownFileType = text; path = "project-ref"; sourceTree = "<group>"; };
+		ECF9B8862F2BC65A006A70B9 /* rest-version */ = {isa = PBXFileReference; lastKnownFileType = text; path = "rest-version"; sourceTree = "<group>"; };
+		ECF9B8872F2BC65A006A70B9 /* storage-migration */ = {isa = PBXFileReference; lastKnownFileType = text; path = "storage-migration"; sourceTree = "<group>"; };
+		ECF9B8882F2BC65A006A70B9 /* storage-version */ = {isa = PBXFileReference; lastKnownFileType = text; path = "storage-version"; sourceTree = "<group>"; };
+		ECF9B88A2F2BC65A006A70B9 /* index.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = index.ts; sourceTree = "<group>"; };
+		ECF9B88D2F2BC65A006A70B9 /* 20250125000001_initial_schema.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20250125000001_initial_schema.sql; sourceTree = "<group>"; };
+		ECF9B88E2F2BC65A006A70B9 /* 20250126000001_add_username_auth.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20250126000001_add_username_auth.sql; sourceTree = "<group>"; };
+		ECF9B88F2F2BC65A006A70B9 /* 20250126000002_clerk_auth_migration.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20250126000002_clerk_auth_migration.sql; sourceTree = "<group>"; };
+		ECF9B8912F2BC65A006A70B9 /* config.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.toml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		EC0779C22F26B52300D71EB2 /* Exceptions for "lambdas-xi-chapter" folder in "lambdas-xi-chapter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = EC0779B22F26B2B000D71EB2 /* lambdas-xi-chapter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		EC0779B52F26B2B000D71EB2 /* lambdas-xi-chapter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EC0779C22F26B52300D71EB2 /* Exceptions for "lambdas-xi-chapter" folder in "lambdas-xi-chapter" target */,
+			);
 			path = "lambdas-xi-chapter";
 			sourceTree = "<group>";
 		};
@@ -23,6 +64,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECD00E932F27F5D600F599AC /* Clerk in Frameworks */,
+				ECD00E4C2F27F56D00F599AC /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +77,9 @@
 			children = (
 				EC0779B52F26B2B000D71EB2 /* lambdas-xi-chapter */,
 				EC0779B42F26B2B000D71EB2 /* Products */,
+				ECF9B8762F2BC63B006A70B9 /* Configs */,
+				ECF9B8802F2BC64F006A70B9 /* docs */,
+				ECF9B8922F2BC65A006A70B9 /* supabase */,
 			);
 			sourceTree = "<group>";
 		};
@@ -43,6 +89,82 @@
 				EC0779B32F26B2B000D71EB2 /* lambdas-xi-chapter.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		ECF9B8762F2BC63B006A70B9 /* Configs */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B8752F2BC63B006A70B9 /* Secrets.xcconfig */,
+			);
+			path = Configs;
+			sourceTree = "<group>";
+		};
+		ECF9B8802F2BC64F006A70B9 /* docs */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B8772F2BC64F006A70B9 /* CLERK_SETUP_GUIDE.md */,
+				ECF9B8782F2BC64F006A70B9 /* DEBUG_STEPS.md */,
+				ECF9B8792F2BC64F006A70B9 /* design_spec.md */,
+				ECF9B87A2F2BC64F006A70B9 /* MIGRATION_SUMMARY.md */,
+				ECF9B87B2F2BC64F006A70B9 /* PRODUCTION_AUTH_GUIDE.md */,
+				ECF9B87C2F2BC64F006A70B9 /* QUICK_START.md */,
+				ECF9B87D2F2BC64F006A70B9 /* SUPABASE_SETUP.md */,
+				ECF9B87E2F2BC64F006A70B9 /* TEMP_TESTING_SETUP.md */,
+				ECF9B87F2F2BC64F006A70B9 /* USERNAME_PASSWORD_SETUP.md */,
+			);
+			path = docs;
+			sourceTree = "<group>";
+		};
+		ECF9B8892F2BC65A006A70B9 /* .temp */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B8812F2BC65A006A70B9 /* cli-latest */,
+				ECF9B8822F2BC65A006A70B9 /* gotrue-version */,
+				ECF9B8832F2BC65A006A70B9 /* pooler-url */,
+				ECF9B8842F2BC65A006A70B9 /* postgres-version */,
+				ECF9B8852F2BC65A006A70B9 /* project-ref */,
+				ECF9B8862F2BC65A006A70B9 /* rest-version */,
+				ECF9B8872F2BC65A006A70B9 /* storage-migration */,
+				ECF9B8882F2BC65A006A70B9 /* storage-version */,
+			);
+			path = .temp;
+			sourceTree = "<group>";
+		};
+		ECF9B88B2F2BC65A006A70B9 /* auth-complete */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B88A2F2BC65A006A70B9 /* index.ts */,
+			);
+			path = "auth-complete";
+			sourceTree = "<group>";
+		};
+		ECF9B88C2F2BC65A006A70B9 /* functions */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B88B2F2BC65A006A70B9 /* auth-complete */,
+			);
+			path = functions;
+			sourceTree = "<group>";
+		};
+		ECF9B8902F2BC65A006A70B9 /* migrations */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B88D2F2BC65A006A70B9 /* 20250125000001_initial_schema.sql */,
+				ECF9B88E2F2BC65A006A70B9 /* 20250126000001_add_username_auth.sql */,
+				ECF9B88F2F2BC65A006A70B9 /* 20250126000002_clerk_auth_migration.sql */,
+			);
+			path = migrations;
+			sourceTree = "<group>";
+		};
+		ECF9B8922F2BC65A006A70B9 /* supabase */ = {
+			isa = PBXGroup;
+			children = (
+				ECF9B8892F2BC65A006A70B9 /* .temp */,
+				ECF9B88C2F2BC65A006A70B9 /* functions */,
+				ECF9B8902F2BC65A006A70B9 /* migrations */,
+				ECF9B8912F2BC65A006A70B9 /* config.toml */,
+			);
+			path = supabase;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +187,8 @@
 			);
 			name = "lambdas-xi-chapter";
 			packageProductDependencies = (
+				EC0779C32F26C00100D71EB2 /* Supabase */,
+				ECD00E922F27F5D600F599AC /* Clerk */,
 			);
 			productName = "lambdas-xi-chapter";
 			productReference = EC0779B32F26B2B000D71EB2 /* lambdas-xi-chapter.app */;
@@ -94,6 +218,10 @@
 			);
 			mainGroup = EC0779AA2F26B2B000D71EB2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EC0779C12F26C00100D71EB2 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				ECD00E912F27F5D600F599AC /* XCRemoteSwiftPackageReference "clerk-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EC0779B42F26B2B000D71EB2 /* Products */;
 			projectDirPath = "";
@@ -241,6 +369,7 @@
 		};
 		EC0779BF2F26B2B100D71EB2 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = ECF9B8752F2BC63B006A70B9 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -250,6 +379,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "lambdas-xi-chapter/Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -283,6 +413,7 @@
 		};
 		EC0779C02F26B2B100D71EB2 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = ECF9B8752F2BC63B006A70B9 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -292,6 +423,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "lambdas-xi-chapter/Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -345,6 +477,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EC0779C12F26C00100D71EB2 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+		ECD00E912F27F5D600F599AC /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.71.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EC0779C32F26C00100D71EB2 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC0779C12F26C00100D71EB2 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		ECD00E922F27F5D600F599AC /* Clerk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ECD00E912F27F5D600F599AC /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = Clerk;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EC0779AB2F26B2B000D71EB2 /* Project object */;
 }

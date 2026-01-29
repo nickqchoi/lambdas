@@ -1,0 +1,5 @@
+.DS_Store
+.env
+Configs/Secrets.xcconfig
+*.mode1v3
+*.auth

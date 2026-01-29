@@ -16,7 +16,7 @@ struct NewsView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 if isLoading {
                     ProgressView("Loading news...")
                 } else if posts.isEmpty {

@@ -75,7 +75,7 @@ struct AuthView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 40)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.appBackground.ignoresSafeArea())
         .onChange(of: auth.authState) { _, newState in
             // Debug: Handle auth state changes
             handleAuthStateChange(newState)
@@ -86,16 +86,19 @@ struct AuthView: View {
     
     private var headerView: some View {
         VStack(spacing: 8) {
-            Image(systemName: headerIcon)
-                .font(.system(size: 60))
-                .foregroundStyle(.blue)
+            Image.appLogo
+                .resizable()
+                .scaledToFit()
+                .frame(height: 80)
+                .symbolEffect(.bounce, value: mode)
             
             Text(headerTitle)
-                .font(.title.bold())
+                .appHeaderFont()
+                .multilineTextAlignment(.center)
             
             Text(headerSubtitle)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appTextSecondary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -137,10 +140,12 @@ struct AuthView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Email or Username")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appTextSecondary)
                 
                 TextField("Enter email or username", text: $email)
-                    .textFieldStyle(.roundedBorder)
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(DesignSystem.Radius.input)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.emailAddress)
@@ -151,19 +156,22 @@ struct AuthView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Password")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appTextSecondary)
                 
                 SecureField("Enter password", text: $password)
-                    .textFieldStyle(.roundedBorder)
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(DesignSystem.Radius.input)
                     .disabled(auth.authState == .authenticating)
             }
             
             // Sign In button
-            primaryButton(title: "Sign In") {
+            Button("Sign In") {
                 Task {
                     await auth.login(identifier: email, password: password)
                 }
             }
+            .buttonStyle(AppButtonStyle(variant: .primary))
             .disabled(email.isEmpty || password.isEmpty || auth.authState == .authenticating)
             
             // Forgot password link
@@ -173,7 +181,7 @@ struct AuthView: View {
             } label: {
                 Text("Forgot password?")
                     .font(.subheadline)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color.appPrimary)
             }
             
             // Divider
@@ -252,7 +260,7 @@ struct AuthView: View {
             }
             
             // Create Account button
-            primaryButton(title: "Create Account") {
+            Button("Create Account") {
                 Task {
                     await auth.register(
                         email: email,
@@ -262,6 +270,7 @@ struct AuthView: View {
                     )
                 }
             }
+            .buttonStyle(AppButtonStyle(variant: .primary))
             .disabled(
                 email.isEmpty || username.isEmpty || password.isEmpty || 
                 confirmPassword.isEmpty || auth.authState == .authenticating
@@ -310,11 +319,12 @@ struct AuthView: View {
             }
             
             // Verify button
-            primaryButton(title: "Verify") {
+            Button("Verify") {
                 Task {
                     await auth.verifyEmail(code: verificationCode)
                 }
             }
+            .buttonStyle(AppButtonStyle(variant: .primary))
             .disabled(verificationCode.isEmpty || auth.authState == .authenticating)
             
             // Resend code button
@@ -361,11 +371,12 @@ struct AuthView: View {
             }
             
             // Send Reset Code button
-            primaryButton(title: "Send Reset Code") {
+            Button("Send Reset Code") {
                 Task {
                     await auth.resetPassword(email: email)
                 }
             }
+            .buttonStyle(AppButtonStyle(variant: .primary))
             .disabled(email.isEmpty || auth.authState == .authenticating)
             
             // Back to sign in
@@ -416,11 +427,12 @@ struct AuthView: View {
             }
             
             // Reset Password button
-            primaryButton(title: "Reset Password") {
+            Button("Reset Password") {
                 Task {
                     await auth.completePasswordReset(code: verificationCode, newPassword: newPassword)
                 }
             }
+            .buttonStyle(AppButtonStyle(variant: .primary))
             .disabled(verificationCode.isEmpty || newPassword.isEmpty || auth.authState == .authenticating)
             
             // Cancel button
@@ -467,17 +479,8 @@ struct AuthView: View {
     
     // MARK: - UI Components
     
-    private func primaryButton(title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(12)
-        }
-    }
+    // MARK: - Legacy UI Components (Deprecated)
+    // Using DesignSystem instead
     
     private func dividerWithText(_ text: String) -> some View {
         HStack {
@@ -501,9 +504,9 @@ struct AuthView: View {
         Button(action: onTap) {
             HStack(spacing: 4) {
                 Text(text)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appTextSecondary)
                 Text(action)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color.appPrimary)
                     .fontWeight(.medium)
             }
             .font(.subheadline)

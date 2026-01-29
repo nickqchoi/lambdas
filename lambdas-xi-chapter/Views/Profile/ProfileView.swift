@@ -21,7 +21,7 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 if isLoading {
                     ProgressView("Loading profile...")
                 } else if let p = profile {
@@ -161,6 +161,14 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("My Profile")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image.appLogo
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 40)
+                }
+            }
             .sheet(isPresented: $showEditProfile) {
                 if let p = profile {
                     EditProfileView(profile: p) { loadProfile() }

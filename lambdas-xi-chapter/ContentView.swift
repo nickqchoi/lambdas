@@ -41,6 +41,7 @@ struct ContentView: View {
                     }
             }
         }
+        .tint(Color.appPrimary) // Global tint color
         .task(id: auth.currentUser?.clerkId) {
             // Debug: Fetch profile when user changes
             await checkProfileCompletion()

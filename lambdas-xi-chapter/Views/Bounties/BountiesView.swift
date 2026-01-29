@@ -18,7 +18,7 @@ struct BountiesView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 if isLoading {
                     ProgressView("Loading bounties...")
                 } else if bounties.isEmpty {
@@ -48,6 +48,12 @@ struct BountiesView: View {
             }
             .navigationTitle("Bounties")
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image.appLogo
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 40)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showCreateBounty = true
@@ -299,11 +305,15 @@ struct CreateBountyView: View {
                 clerkCreatorId: user.clerkId,
                 status: .open
             )
-            bountyService.createBounty(bounty)
-            await MainActor.run {
-                isSaving = false
-                onCreated()
-                dismiss()
+            do {
+                try await bountyService.createBounty(bounty)
+                await MainActor.run {
+                    isSaving = false
+                    onCreated()
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run { isSaving = false }
             }
         }
     }
@@ -312,6 +322,14 @@ struct CreateBountyView: View {
 struct BountyDetailView: View {
     let bounty: Bounty
     let onUpdate: () -> Void
+    
+    @State private var currentBounty: Bounty
+    
+    init(bounty: Bounty, onUpdate: @escaping () -> Void) {
+        self.bounty = bounty
+        self.onUpdate = onUpdate
+        _currentBounty = State(initialValue: bounty)
+    }
     
     @StateObject private var bountyService = BountyService.shared
     @StateObject private var profileService = ProfileService.shared
@@ -324,7 +342,7 @@ struct BountyDetailView: View {
     @State private var applicationMessage = ""
     
     var isCreator: Bool {
-        auth.currentUser?.clerkId == bounty.clerkCreatorId
+        auth.currentUser?.clerkId == currentBounty.clerkCreatorId
     }
     
     var hasApplied: Bool {
@@ -338,7 +356,7 @@ struct BountyDetailView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // Status
                     HStack {
-                        Text(bounty.status.rawValue)
+                        Text(currentBounty.status.rawValue)
                             .font(.headline)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
@@ -348,19 +366,19 @@ struct BountyDetailView: View {
                     }
                     
                     // Title
-                    Text(bounty.title)
+                    Text(currentBounty.title)
                         .font(.title2)
                         .fontWeight(.bold)
                     
                     // Description
-                    Text(bounty.description)
+                    Text(currentBounty.description)
                         .font(.body)
                     
                     Divider()
                     
                     // Details
                     VStack(alignment: .leading, spacing: 12) {
-                        if let effort = bounty.estimatedEffort {
+                        if let effort = currentBounty.estimatedEffort {
                             HStack {
                                 Image(systemName: "clock")
                                 Text("Effort: \(effort.rawValue)")
@@ -368,7 +386,7 @@ struct BountyDetailView: View {
                             .font(.subheadline)
                         }
                         
-                        if let deadline = bounty.deadline {
+                        if let deadline = currentBounty.deadline {
                             HStack {
                                 Image(systemName: "calendar")
                                 Text("Deadline: \(deadline, format: .dateTime.month().day().year())")
@@ -382,7 +400,7 @@ struct BountyDetailView: View {
                         Text("Skills")
                             .font(.headline)
                         FlowLayout(spacing: 8) {
-                            ForEach(bounty.skillTags) { skill in
+                            ForEach(currentBounty.skillTags) { skill in
                                 Text(skill.label)
                                     .font(.subheadline)
                                     .padding(.horizontal, 12)
@@ -427,23 +445,26 @@ struct BountyDetailView: View {
                             Text("Applications (\(applications.count))")
                                 .font(.headline)
                             ForEach(applications) { app in
-                                ApplicationRow(application: app, bounty: bounty, onUpdate: onUpdate)
+                                ApplicationRow(application: app, bounty: currentBounty) {
+                                    await refreshBounty()
+                                    onUpdate()
+                                }
                             }
                         }
                     }
                     
                     // Apply button
-                    if !isCreator && bounty.status == .open && !hasApplied {
+                    if !isCreator && currentBounty.status == .open && !hasApplied {
                         Button {
                             showApplySheet = true
                         } label: {
                             Text("Apply for this Bounty")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundStyle(.white)
-                                .cornerRadius(12)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundStyle(.white)
+                            .cornerRadius(12)
                         }
                     } else if !isCreator && hasApplied {
                         Text("You've already applied")
@@ -454,11 +475,14 @@ struct BountyDetailView: View {
                     }
                     
                     // Mark complete (for creator, when in progress)
-                    if isCreator && bounty.status == .inProgress {
+                    if isCreator && currentBounty.status == .inProgress {
                         Button {
-                            bountyService.markBountyComplete(bountyId: bounty.id)
-                            onUpdate()
-                            dismiss()
+                            bountyService.markBountyComplete(bountyId: currentBounty.id)
+                            Task {
+                                await refreshBounty()
+                                onUpdate()
+                                dismiss()
+                            }
                         } label: {
                             Text("Mark as Completed")
                                 .font(.headline)
@@ -480,7 +504,7 @@ struct BountyDetailView: View {
                 }
             }
             .sheet(isPresented: $showApplySheet) {
-                ApplyToBountyView(bounty: bounty) {
+                ApplyToBountyView(bounty: currentBounty) {
                     loadApplications()
                 }
             }
@@ -492,7 +516,7 @@ struct BountyDetailView: View {
     }
     
     private var statusColor: Color {
-        switch bounty.status {
+        switch currentBounty.status {
         case .open: return .green
         case .inProgress: return .orange
         case .completed: return .gray
@@ -501,15 +525,23 @@ struct BountyDetailView: View {
     
     private func loadCreator() {
         Task {
-            let profile = await profileService.fetchProfile(id: bounty.creatorId)
+            let profile = await profileService.fetchProfile(id: currentBounty.creatorId)
             await MainActor.run { creatorProfile = profile }
         }
     }
     
     private func loadApplications() {
         Task {
-            let apps = await bountyService.fetchApplications(bountyId: bounty.id)
+            let apps = await bountyService.fetchApplications(bountyId: currentBounty.id)
             await MainActor.run { applications = apps }
+        }
+    }
+    
+    private func refreshBounty() async {
+        if let updated = await bountyService.fetchBounty(id: currentBounty.id) {
+            await MainActor.run {
+                currentBounty = updated
+            }
         }
     }
 }
@@ -517,7 +549,7 @@ struct BountyDetailView: View {
 struct ApplicationRow: View {
     let application: BountyApplication
     let bounty: Bounty
-    let onUpdate: () -> Void
+    let onUpdate: () async -> Void
     
     @StateObject private var profileService = ProfileService.shared
     @StateObject private var bountyService = BountyService.shared
@@ -546,8 +578,10 @@ struct ApplicationRow: View {
                     
                     if bounty.status == .open {
                         Button("Accept") {
-                            bountyService.acceptApplication(bountyId: bounty.id, applicationId: application.id, applicantId: application.applicantId)
-                            onUpdate()
+                            Task {
+                                try? await bountyService.acceptApplication(bountyId: bounty.id, applicationId: application.id, applicantId: application.applicantId)
+                                await onUpdate()
+                            }
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
@@ -628,11 +662,15 @@ struct ApplyToBountyView: View {
                 message: message.trimmingCharacters(in: .whitespaces),
                 appliedAt: Date()
             )
-            bountyService.applyToBounty(application: app)
-            await MainActor.run {
-                isSaving = false
-                onApplied()
-                dismiss()
+            do {
+                try await bountyService.applyToBounty(application: app)
+                await MainActor.run {
+                    isSaving = false
+                    onApplied()
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run { isSaving = false }
             }
         }
     }

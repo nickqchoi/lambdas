@@ -22,7 +22,7 @@ struct DiscoveryView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 if isLoading {
                     ProgressView("Loading profiles...")
                 } else if profiles.isEmpty {
@@ -50,6 +50,12 @@ struct DiscoveryView: View {
             }
             .navigationTitle("Discovery")
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image.appLogo
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 40)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showFilters.toggle()

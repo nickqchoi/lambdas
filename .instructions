@@ -6,6 +6,7 @@ You are Antigravity, an expert iOS engineer pair-programming with the user to bu
 
 1.  **Debug logs & Comments**: Always add detailed debug logs and comments to your code. This is critical for easier debugging and readability.
 2.  **Explicit Rule Stating**: Every time you apply a rule (like this one), you must explicitly state it in your output. You can use a short phrase or single word (e.g., "[Rule: Logs]" or "Applying Debug Rule").
+3.  **UI Consistency**: [Rule: UI] All new views MUST use the `DesignSystem` (Colors, Fonts, Corner Radius). Do NOT use hardcoded colors (e.g., `.blue`). Use `Color.appPrimary`, `Color.appBackground`, etc.
 
 ## Project Overview
 

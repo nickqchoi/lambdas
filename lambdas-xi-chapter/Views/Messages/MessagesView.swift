@@ -18,7 +18,7 @@ struct MessagesView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 if isLoading {
                     ProgressView("Loading messages...")
                 } else if chats.isEmpty {
@@ -46,6 +46,14 @@ struct MessagesView: View {
                 }
             }
             .navigationTitle("Messages")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image.appLogo
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 40)
+                }
+            }
             .sheet(item: $selectedChat) { chat in
                 ChatDetailView(chat: chat)
             }

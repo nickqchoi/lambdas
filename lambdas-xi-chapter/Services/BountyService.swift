@@ -30,34 +30,40 @@ final class BountyService: ObservableObject {
         return bounties.sorted { $0.updatedAt > $1.updatedAt }
     }
 
-    func createBounty(_ b: Bounty) {
+    func createBounty(_ b: Bounty) async throws {
         var b = b
         b.updatedAt = Date()
         if let c = SupabaseConfig.client {
-            Task {
-                do {
-                    try await c.from("bounties").insert(b).execute()
-                    await MainActor.run { bounties.insert(b, at: 0) }
-                    debugLog("BountyService: created \(b.id)")
-                } catch { debugLog("BountyService: create \(error)") }
+            do {
+                try await c.from("bounties").insert(b).execute()
+                await MainActor.run { bounties.insert(b, at: 0) }
+                debugLog("BountyService: created \(b.id)")
+            } catch {
+                debugLog("BountyService: create \(error)")
+                throw error
             }
         } else {
-            bounties.append(b)
+            // Simulate network delay for mock
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+            await MainActor.run { bounties.insert(b, at: 0) }
             debugLog("BountyService: created \(b.id) (mock)")
         }
     }
 
-    func applyToBounty(application: BountyApplication) {
+    func applyToBounty(application: BountyApplication) async throws {
         if let c = SupabaseConfig.client {
-            Task {
-                do {
-                    try await c.from("bounty_applications").insert(application).execute()
-                    await MainActor.run { applications.append(application) }
-                    debugLog("BountyService: applied \(application.id)")
-                } catch { debugLog("BountyService: apply \(error)") }
+            do {
+                try await c.from("bounty_applications").insert(application).execute()
+                await MainActor.run { applications.append(application) }
+                debugLog("BountyService: applied \(application.id)")
+            } catch {
+                debugLog("BountyService: apply \(error)")
+                throw error
             }
         } else {
-            applications.append(application)
+            // Simulate network delay for mock
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+            await MainActor.run { applications.append(application) }
             debugLog("BountyService: applied \(application.id) (mock)")
         }
     }
@@ -75,27 +81,33 @@ final class BountyService: ObservableObject {
     private struct BountyAcceptUpdate: Encodable { let status: String; let accepted_applicant_id: UUID; let updated_at: String }
 
     /// §11 Step 1. Accept applicant → In Progress; creates chat via MessagingService.
-    func acceptApplication(bountyId: UUID, applicationId: UUID, applicantId: UUID) {
-        Task {
-            if let c = SupabaseConfig.client {
-                do {
-                    let upd = BountyAcceptUpdate(status: BountyStatus.inProgress.rawValue, accepted_applicant_id: applicantId, updated_at: ISO8601DateFormatter().string(from: Date()))
-                    try await c.from("bounties").update(upd).eq("id", value: bountyId).execute()
-                    try await c.from("bounty_applications").update(["status": ApplicationStatus.accepted.rawValue]).eq("id", value: applicationId).execute()
-                    if let bounty = bounties.first(where: { $0.id == bountyId }) {
-                        _ = await MessagingService.shared.createChat(participant1: bounty.creatorId, participant2: applicantId, bountyId: bountyId)
-                    }
-                } catch { debugLog("BountyService: acceptApplication \(error)") }
-            } else {
-                guard var b = bounties.first(where: { $0.id == bountyId }), b.status == .open,
-                      applications.contains(where: { $0.id == applicationId }) else { return }
-                b.status = .inProgress
-                b.acceptedApplicantId = applicantId
-                b.updatedAt = Date()
+    func acceptApplication(bountyId: UUID, applicationId: UUID, applicantId: UUID) async throws {
+        if let c = SupabaseConfig.client {
+            do {
+                let upd = BountyAcceptUpdate(status: BountyStatus.inProgress.rawValue, accepted_applicant_id: applicantId, updated_at: ISO8601DateFormatter().string(from: Date()))
+                try await c.from("bounties").update(upd).eq("id", value: bountyId).execute()
+                try await c.from("bounty_applications").update(["status": ApplicationStatus.accepted.rawValue]).eq("id", value: applicationId).execute()
+                if let bounty = bounties.first(where: { $0.id == bountyId }) {
+                    _ = await MessagingService.shared.createChat(participant1: bounty.creatorId, participant2: applicantId, bountyId: bountyId)
+                }
+            } catch {
+                debugLog("BountyService: acceptApplication \(error)")
+                throw error
+            }
+        } else {
+            // Simulate network delay for mock
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+            
+            guard var b = bounties.first(where: { $0.id == bountyId }), b.status == .open,
+                  applications.contains(where: { $0.id == applicationId }) else { return }
+            b.status = .inProgress
+            b.acceptedApplicantId = applicantId
+            b.updatedAt = Date()
+            await MainActor.run {
                 if let i = bounties.firstIndex(where: { $0.id == bountyId }) { bounties[i] = b }
                 if let j = applications.firstIndex(where: { $0.id == applicationId }) { applications[j].status = .accepted }
-                _ = await MessagingService.shared.createChat(participant1: b.creatorId, participant2: applicantId, bountyId: bountyId)
             }
+            _ = await MessagingService.shared.createChat(participant1: b.creatorId, participant2: applicantId, bountyId: bountyId)
         }
     }
 

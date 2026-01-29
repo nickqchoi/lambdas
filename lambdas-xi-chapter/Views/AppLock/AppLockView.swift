@@ -18,15 +18,20 @@ struct AppLockView: View {
             Spacer()
 
             // §4.1 App branding
-            VStack(spacing: 12) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 56))
-                    .foregroundStyle(.secondary)
+            VStack(spacing: 8) {
+                Image.appLogo
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 80)
+                
                 Text("Lambdas Xi Chapter")
-                    .font(.title.weight(.semibold))
+                    .appHeaderFont()
+                    .multilineTextAlignment(.center)
+                
                 Text("Private, invite-only")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appTextSecondary)
+                    .multilineTextAlignment(.center)
             }
 
             // §4.1 Text input: "Enter Invite Code"

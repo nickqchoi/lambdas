@@ -104,15 +104,12 @@ struct ProfileCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                // Profile photo placeholder
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                    .overlay {
-                        Text(profile.fullName.prefix(1))
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                    }
+                // Profile photo
+                AvatarView(
+                    photoURL: profile.profilePhotoURL,
+                    initials: profile.fullName,
+                    size: 50
+                )
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(profile.fullName)
@@ -285,14 +282,11 @@ struct ProfileDetailView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // Header
                     HStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: 80, height: 80)
-                            .overlay {
-                                Text(profile.fullName.prefix(1))
-                                    .font(.largeTitle)
-                                    .fontWeight(.semibold)
-                            }
+                        AvatarView(
+                            photoURL: profile.profilePhotoURL,
+                            initials: profile.fullName,
+                            size: 80
+                        )
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text(profile.fullName)

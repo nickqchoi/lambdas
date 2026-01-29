@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct ProfileView: View {
     @StateObject private var profileService = ProfileService.shared
@@ -29,14 +30,12 @@ struct ProfileView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             // Header
                             HStack {
-                                Circle()
-                                    .fill(Color.blue.opacity(0.2))
-                                    .frame(width: 80, height: 80)
-                                    .overlay {
-                                        Text(p.fullName.prefix(1))
-                                            .font(.largeTitle)
-                                            .fontWeight(.semibold)
-                                    }
+                                AvatarView(
+                                    photoURL: p.profilePhotoURL,
+                                    initials: p.fullName,
+                                    size: 80
+                                )
+                                mapInitials(p)
                                 
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(p.fullName)
@@ -199,6 +198,10 @@ struct ProfileView: View {
         }
     }
     
+    private func mapInitials(_ p: Profile) -> some View {
+        EmptyView() // Placeholder to match structure change if needed or just use AvatarView
+    }
+    
     /// Load profile using Clerk user ID
     /// Debug: Fetches profile from Supabase using clerk_user_id
     private func loadProfile() {
@@ -238,6 +241,11 @@ struct EditProfileView: View {
     @State private var errorMessage: String?
     @State private var isSaving = false
     
+    // Photo Selection
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var profilePhotoURL: String?
+    @State private var isUploadingPhoto = false
+    
     init(profile: Profile, onSaved: @escaping () -> Void) {
         self.profile = profile
         self.onSaved = onSaved
@@ -248,11 +256,41 @@ struct EditProfileView: View {
         _majorOrIndustry = State(initialValue: profile.majorOrIndustry)
         _selectedSkills = State(initialValue: profile.skills)
         _shortBio = State(initialValue: profile.shortBio)
+        _profilePhotoURL = State(initialValue: profile.profilePhotoURL)
     }
     
     var body: some View {
         NavigationStack {
             Form {
+                // Photo Upload Section
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack {
+                            AvatarView(
+                                photoURL: profilePhotoURL,
+                                initials: fullName,
+                                size: 100
+                            )
+                            
+                            PhotosPicker(selection: $selectedItem, matching: .images) {
+                                Text(profilePhotoURL == nil ? "Add Photo" : "Change Photo")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .disabled(isUploadingPhoto)
+                            
+                            if isUploadingPhoto {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+                .listRowBackground(Color.clear)
+                
                 // Debug: Show username (read-only)
                 if !profile.username.isEmpty {
                     Section {
@@ -339,7 +377,28 @@ struct EditProfileView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
-                        .disabled(isSaving)
+                        .disabled(isSaving || isUploadingPhoto)
+                }
+            }
+            .onChange(of: selectedItem) { newItem in
+                Task {
+                    guard let data = try? await newItem?.loadTransferable(type: Data.self) else { return }
+                    // Use profile's clerkUserId
+                    let userId = profile.clerkUserId
+                    
+                    isUploadingPhoto = true
+                    do {
+                        let url = try await profileService.uploadProfilePhoto(data: data, clerkUserId: userId)
+                        await MainActor.run {
+                            profilePhotoURL = url
+                            isUploadingPhoto = false
+                        }
+                    } catch {
+                        await MainActor.run {
+                            errorMessage = "Failed to upload photo: \(error.localizedDescription)"
+                            isUploadingPhoto = false
+                        }
+                    }
                 }
             }
         }
@@ -381,6 +440,7 @@ struct EditProfileView: View {
         updatedProfile.majorOrIndustry = majorOrIndustry.trimmingCharacters(in: .whitespaces)
         updatedProfile.skills = selectedSkills
         updatedProfile.shortBio = shortBio.trimmingCharacters(in: .whitespaces)
+        updatedProfile.profilePhotoURL = profilePhotoURL
         
         if !profileService.isProfileComplete(updatedProfile) {
             errorMessage = "Please fill in all required fields."

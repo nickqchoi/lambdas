@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct ProfileSetupView: View {
     @StateObject private var profileService = ProfileService.shared
@@ -23,10 +24,44 @@ struct ProfileSetupView: View {
     @State private var shortBio = ""
     @State private var errorMessage: String?
     @State private var isSaving = false
+    
+    // Photo Selection
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var profilePhotoURL: String?
+    @State private var isUploadingPhoto = false
 
     var body: some View {
         NavigationStack {
             Form {
+                // Photo Upload Section
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack {
+                            AvatarView(
+                                photoURL: profilePhotoURL,
+                                initials: fullName.isEmpty ? (auth.currentUser?.username ?? "U") : fullName,
+                                size: 100
+                            )
+                            
+                            PhotosPicker(selection: $selectedItem, matching: .images) {
+                                Text(profilePhotoURL == nil ? "Add Photo" : "Change Photo")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .disabled(isUploadingPhoto)
+                            
+                            if isUploadingPhoto {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+                .listRowBackground(Color.clear)
+                
                 // Debug: Show username from Clerk
                 if let user = auth.currentUser, !user.username.isEmpty {
                     Section {
@@ -110,7 +145,28 @@ struct ProfileSetupView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
-                        .disabled(isSaving)
+                        .disabled(isSaving || isUploadingPhoto)
+                }
+            }
+            .onChange(of: selectedItem) { newItem in
+                Task {
+                    guard let data = try? await newItem?.loadTransferable(type: Data.self),
+                          let userId = auth.currentUser?.clerkId
+                    else { return }
+                    
+                    isUploadingPhoto = true
+                    do {
+                        let url = try await profileService.uploadProfilePhoto(data: data, clerkUserId: userId)
+                        await MainActor.run {
+                            profilePhotoURL = url
+                            isUploadingPhoto = false
+                        }
+                    } catch {
+                        await MainActor.run {
+                            errorMessage = "Failed to upload photo: \(error.localizedDescription)"
+                            isUploadingPhoto = false
+                        }
+                    }
                 }
             }
         }
@@ -168,7 +224,8 @@ struct ProfileSetupView: View {
             graduationYear: graduationYear.trimmingCharacters(in: .whitespaces),
             majorOrIndustry: majorOrIndustry.trimmingCharacters(in: .whitespaces),
             skills: skills,
-            shortBio: shortBio.trimmingCharacters(in: .whitespaces)
+            shortBio: shortBio.trimmingCharacters(in: .whitespaces),
+            profilePhotoURL: profilePhotoURL // Include photo URL
         )
         
         // Validate completeness

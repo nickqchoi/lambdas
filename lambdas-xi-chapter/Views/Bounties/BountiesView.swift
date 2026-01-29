@@ -90,6 +90,9 @@ struct BountyCardView: View {
     let bounty: Bounty
     let onTap: () -> Void
     
+    @State private var creatorProfile: Profile?
+    @StateObject private var profileService = ProfileService.shared
+    
     var statusColor: Color {
         switch bounty.status {
         case .open: return .green
@@ -101,11 +104,34 @@ struct BountyCardView: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
+                // Header: Creator info + Status
                 HStack {
-                    Text(bounty.title)
-                        .font(.headline)
-                        .multilineTextAlignment(.leading)
+                    if let creator = creatorProfile {
+                        HStack(spacing: 8) {
+                            AvatarView(
+                                photoURL: creator.profilePhotoURL,
+                                initials: creator.fullName,
+                                size: 32
+                            )
+                            Text(creator.fullName)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                    } else {
+                        // Skeleton/Loading state for creator
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(width: 32, height: 32)
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(width: 100, height: 16)
+                                .cornerRadius(4)
+                        }
+                    }
+                    
                     Spacer()
+                    
                     Text(bounty.status.rawValue)
                         .font(.caption)
                         .padding(.horizontal, 8)
@@ -113,6 +139,11 @@ struct BountyCardView: View {
                         .background(statusColor.opacity(0.2))
                         .cornerRadius(6)
                 }
+                
+                Text(bounty.title)
+                    .font(.headline)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
                 
                 Text(bounty.description)
                     .font(.subheadline)
@@ -155,6 +186,12 @@ struct BountyCardView: View {
             .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
         }
         .buttonStyle(.plain)
+        .task {
+            if creatorProfile == nil {
+                let p = await profileService.fetchProfile(id: bounty.creatorId)
+                await MainActor.run { creatorProfile = p }
+            }
+        }
     }
 }
 
@@ -419,13 +456,11 @@ struct BountyDetailView: View {
                             Text("Posted by")
                                 .font(.headline)
                             HStack {
-                                Circle()
-                                    .fill(Color.blue.opacity(0.2))
-                                    .frame(width: 40, height: 40)
-                                    .overlay {
-                                        Text(creator.fullName.prefix(1))
-                                            .font(.headline)
-                                    }
+                                AvatarView(
+                                    photoURL: creator.profilePhotoURL,
+                                    initials: creator.fullName,
+                                    size: 40
+                                )
                                 VStack(alignment: .leading) {
                                     Text(creator.fullName)
                                         .font(.subheadline)
@@ -559,13 +594,11 @@ struct ApplicationRow: View {
         VStack(alignment: .leading, spacing: 8) {
             if let profile = applicantProfile {
                 HStack {
-                    Circle()
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 35, height: 35)
-                        .overlay {
-                            Text(profile.fullName.prefix(1))
-                                .font(.subheadline)
-                        }
+                    AvatarView(
+                        photoURL: profile.profilePhotoURL,
+                        initials: profile.fullName,
+                        size: 35
+                    )
                     VStack(alignment: .leading, spacing: 2) {
                         Text(profile.fullName)
                             .font(.subheadline)

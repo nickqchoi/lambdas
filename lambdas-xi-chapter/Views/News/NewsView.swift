@@ -99,9 +99,22 @@ struct NewsCardView: View {
                             .multilineTextAlignment(.leading)
                     }
                     
-                    Text(post.publishedAt, format: .dateTime.month().day().year())
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    HStack {
+                        if let author = post.authorName {
+                            AvatarView(
+                                photoURL: nil,
+                                initials: author,
+                                size: 20
+                            )
+                            Text(author)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Text(post.publishedAt, format: .dateTime.month().day().year())
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
                 .padding(.horizontal, 4)
             }
@@ -141,10 +154,25 @@ struct NewsDetailView: View {
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    // Date
-                    Text(post.publishedAt, format: .dateTime.month().day().year())
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    // Author & Date
+                    HStack {
+                        if let author = post.authorName {
+                            AvatarView(
+                                photoURL: nil,
+                                initials: author,
+                                size: 30
+                            )
+                            Text(author)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        
+                        Spacer()
+                        
+                        Text(post.publishedAt, format: .dateTime.month().day().year())
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     
                     Divider()
                     

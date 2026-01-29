@@ -181,6 +181,44 @@ final class ProfileService: ObservableObject {
         }
     }
 
+    // MARK: - Profile Photo Upload
+    
+    /// Upload profile photo to Supabase Storage
+    /// Returns public URL of the uploaded image
+    func uploadProfilePhoto(data: Data, clerkUserId: String) async throws -> String {
+        guard let c = SupabaseConfig.client else {
+            // Mock: return a placeholder
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            return "https://via.placeholder.com/150"
+        }
+        
+        // Define file path: avatars/{clerkUserId}.jpg
+        // Using a timestamp to avoid caching issues if they update it
+        let fileName = "avatars/\(clerkUserId)_\(Int(Date().timeIntervalSince1970)).jpg"
+        let fileOptions = FileOptions(cacheControl: "3600", upsert: true)
+        
+        do {
+            _ = try await c.storage
+                .from("profile-photos")
+                .upload(fileName, data: data, options: fileOptions)
+            
+            // Get public URL
+            // Manually construct URL to avoid API version issues
+            // Format: https://<project-ref>.supabase.co/storage/v1/object/public/<bucket>/<path>
+            guard let supabaseURL = SupabaseConfig.url else {
+                debugLog("ProfileService: no Supabase URL configured")
+                throw URLError(.badURL)
+            }
+            let publicURL = supabaseURL.appendingPathComponent("storage/v1/object/public/profile-photos/\(fileName)")
+            
+            debugLog("ProfileService: uploaded photo to \(publicURL.absoluteString)")
+            return publicURL.absoluteString
+        } catch {
+            debugLog("ProfileService: upload failed - \(error)")
+            throw error
+        }
+    }
+
     // MARK: - Discovery
     
     /// Discovery feed §8.1. Fetches profiles with optional filters.

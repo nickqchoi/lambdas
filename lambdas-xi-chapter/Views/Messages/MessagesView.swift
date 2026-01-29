@@ -98,15 +98,11 @@ struct ChatRowView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            Circle()
-                .fill(Color.blue.opacity(0.2))
-                .frame(width: 50, height: 50)
-                .overlay {
-                    if let profile = otherUserProfile {
-                        Text(profile.fullName.prefix(1))
-                            .font(.headline)
-                    }
-                }
+            AvatarView(
+                photoURL: otherUserProfile?.profilePhotoURL,
+                initials: otherUserProfile?.fullName ?? "",
+                size: 50
+            )
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(otherUserProfile?.fullName ?? "Loading...")

@@ -38,13 +38,28 @@ struct DiscoveryView: View {
                     }
                     .padding()
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(profiles) { profile in
-                                ProfileCardView(profile: profile)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                // Invisible anchor for scrolling to top
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("top")
+                                
+                                ForEach(profiles) { profile in
+                                    ProfileCardView(profile: profile)
+                                }
+                            }
+                            .padding()
+                        }
+                        .refreshable {
+                            loadProfiles()
+                            // Small delay to allow UI to update then scroll
+                            try? await Task.sleep(nanoseconds: 100_000_000)
+                            withAnimation {
+                                proxy.scrollTo("top", anchor: .top)
                             }
                         }
-                        .padding()
                     }
                 }
             }
@@ -98,8 +113,14 @@ struct DiscoveryView: View {
 
 struct ProfileCardView: View {
     let profile: Profile
+    @StateObject private var auth = AuthService.shared
+    @StateObject private var profileService = ProfileService.shared
+    @StateObject private var messagingService = MessagingService.shared
+    
     @State private var showProfile = false
     @State private var showMessage = false
+    @State private var chatToOpen: Chat?
+    @State private var isCreatingChat = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -160,13 +181,20 @@ struct ProfileCardView: View {
                 .buttonStyle(.bordered)
                 
                 Button {
-                    showMessage = true
+                    startChat()
                 } label: {
-                    Text("Message")
-                        .font(.subheadline)
-                        .frame(maxWidth: .infinity)
+                    HStack {
+                        if isCreatingChat {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                        Text("Message")
+                            .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(isCreatingChat)
             }
         }
         .padding()
@@ -176,9 +204,66 @@ struct ProfileCardView: View {
         .sheet(isPresented: $showProfile) {
             ProfileDetailView(profile: profile)
         }
-        .sheet(isPresented: $showMessage) {
-            // TODO: Open chat with this user
-            Text("Start chat with \(profile.fullName)")
+        .sheet(item: $chatToOpen) { chat in
+            ChatDetailView(chat: chat)
+        }
+    }
+    
+    /// Start or open existing chat with this profile
+    private func startChat() {
+        debugLog("ProfileCardView: startChat tapped for profile \(profile.id)")
+        
+        guard let clerkId = auth.currentUser?.clerkId else {
+            debugLog("ProfileCardView: no clerkId, aborting")
+            return
+        }
+        
+        debugLog("ProfileCardView: current user clerkId = \(clerkId)")
+        isCreatingChat = true
+        
+        Task {
+            // Get current user's profile ID
+            debugLog("ProfileCardView: fetching my profile...")
+            guard let myProfile = await profileService.fetchProfile(clerkUserId: clerkId) else {
+                debugLog("ProfileCardView: failed to fetch my profile, aborting")
+                await MainActor.run { isCreatingChat = false }
+                return
+            }
+            
+            debugLog("ProfileCardView: my profile id = \(myProfile.id)")
+            debugLog("ProfileCardView: target profile id = \(profile.id)")
+            
+            // Check if chat already exists (checks DB, not just memory cache)
+            if let existingChat = await messagingService.findExistingChat(participant1: myProfile.id, participant2: profile.id) {
+                debugLog("ProfileCardView: found existing chat \(existingChat.id)")
+                await MainActor.run {
+                    chatToOpen = existingChat
+                    isCreatingChat = false
+                }
+                return
+            }
+            
+            debugLog("ProfileCardView: no existing chat, creating new one...")
+            
+            // Get or create chat with clerk_user_ids for RLS policy
+            let newChat = await messagingService.getOrCreateChat(
+                participant1: myProfile.id,
+                participant2: profile.id,
+                clerkUserId1: clerkId,
+                clerkUserId2: profile.clerkUserId
+            )
+            
+            if let chat = newChat {
+                debugLog("ProfileCardView: created chat \(chat.id)")
+            } else {
+                debugLog("ProfileCardView: failed to create chat (nil returned)")
+            }
+            
+            await MainActor.run {
+                chatToOpen = newChat
+                isCreatingChat = false
+                debugLog("ProfileCardView: chatToOpen set to \(String(describing: newChat?.id))")
+            }
         }
     }
 }

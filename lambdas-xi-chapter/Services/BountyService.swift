@@ -81,15 +81,32 @@ final class BountyService: ObservableObject {
     private struct BountyAcceptUpdate: Encodable { let status: String; let accepted_applicant_id: UUID; let updated_at: String }
 
     /// §11 Step 1. Accept applicant → In Progress; creates chat via MessagingService.
-    func acceptApplication(bountyId: UUID, applicationId: UUID, applicantId: UUID) async throws {
+    /// §11 Step 1. Accept applicant → In Progress; creates/updates chat via MessagingService.
+    /// Returns the chat to navigate to
+    @discardableResult
+    func acceptApplication(bountyId: UUID, applicationId: UUID, applicantId: UUID) async throws -> Chat? {
         if let c = SupabaseConfig.client {
             do {
                 let upd = BountyAcceptUpdate(status: BountyStatus.inProgress.rawValue, accepted_applicant_id: applicantId, updated_at: ISO8601DateFormatter().string(from: Date()))
                 try await c.from("bounties").update(upd).eq("id", value: bountyId).execute()
                 try await c.from("bounty_applications").update(["status": ApplicationStatus.accepted.rawValue]).eq("id", value: applicationId).execute()
+                
                 if let bounty = bounties.first(where: { $0.id == bountyId }) {
-                    _ = await MessagingService.shared.createChat(participant1: bounty.creatorId, participant2: applicantId, bountyId: bountyId)
+                    // Reuse existing chat or create new one (1:1 uniqueness)
+                    if let chat = await MessagingService.shared.getOrCreateChat(participant1: bounty.creatorId, participant2: applicantId, bountyId: bountyId) {
+                        
+                        // Send system message
+                        MessagingService.shared.sendMessage(
+                            chatId: chat.id,
+                            senderId: bounty.creatorId, // System message from creator
+                            body: "Bounty started",
+                            type: .system,
+                            metadata: ["bountyId": bountyId.uuidString]
+                        )
+                        return chat
+                    }
                 }
+                return nil
             } catch {
                 debugLog("BountyService: acceptApplication \(error)")
                 throw error
@@ -99,7 +116,7 @@ final class BountyService: ObservableObject {
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
             
             guard var b = bounties.first(where: { $0.id == bountyId }), b.status == .open,
-                  applications.contains(where: { $0.id == applicationId }) else { return }
+                  applications.contains(where: { $0.id == applicationId }) else { return nil }
             b.status = .inProgress
             b.acceptedApplicantId = applicantId
             b.updatedAt = Date()
@@ -107,7 +124,18 @@ final class BountyService: ObservableObject {
                 if let i = bounties.firstIndex(where: { $0.id == bountyId }) { bounties[i] = b }
                 if let j = applications.firstIndex(where: { $0.id == applicationId }) { applications[j].status = .accepted }
             }
-            _ = await MessagingService.shared.createChat(participant1: b.creatorId, participant2: applicantId, bountyId: bountyId)
+            
+            let chat = await MessagingService.shared.getOrCreateChat(participant1: b.creatorId, participant2: applicantId, bountyId: bountyId)
+            if let chat = chat {
+                MessagingService.shared.sendMessage(
+                    chatId: chat.id,
+                    senderId: b.creatorId,
+                    body: "Bounty started",
+                    type: .system,
+                    metadata: ["bountyId": bountyId.uuidString]
+                )
+            }
+            return chat
         }
     }
 

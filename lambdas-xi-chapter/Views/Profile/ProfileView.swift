@@ -26,133 +26,147 @@ struct ProfileView: View {
                 if isLoading {
                     ProgressView("Loading profile...")
                 } else if let p = profile {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
-                            // Header
-                            HStack {
-                                AvatarView(
-                                    photoURL: p.profilePhotoURL,
-                                    initials: p.fullName,
-                                    size: 80
-                                )
-                                mapInitials(p)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 20) {
+                                // Invisible anchor for scrolling to top
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("top")
+                                    
+                                // Header
+                                HStack {
+                                    AvatarView(
+                                        photoURL: p.profilePhotoURL,
+                                        initials: p.fullName,
+                                        size: 80
+                                    )
+                                    mapInitials(p)
+                                    
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(p.fullName)
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                        
+                                        // Debug: Show username from profile
+                                        if !p.username.isEmpty {
+                                            Text("@\(p.username)")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        
+                                        Text(p.roleTag.rawValue)
+                                            .font(.subheadline)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 4)
+                                            .background(p.roleTag == .alumni ? Color.purple.opacity(0.2) : Color.blue.opacity(0.2))
+                                            .cornerRadius(6)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                                
+                                Divider()
+                                
+                                VStack(alignment: .leading, spacing: 12) {
+                                    InfoRow(label: "Email", value: auth.currentUser?.email ?? "")
+                                    InfoRow(label: "Chapter Class", value: p.chapterClass)
+                                    InfoRow(label: "Graduation Year", value: p.graduationYear)
+                                    InfoRow(label: "Major/Industry", value: p.majorOrIndustry)
+                                }
+                                .padding(.horizontal)
+                                
+                                Divider()
                                 
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text(p.fullName)
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                    
-                                    // Debug: Show username from profile
-                                    if !p.username.isEmpty {
-                                        Text("@\(p.username)")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    
-                                    Text(p.roleTag.rawValue)
-                                        .font(.subheadline)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(p.roleTag == .alumni ? Color.purple.opacity(0.2) : Color.blue.opacity(0.2))
-                                        .cornerRadius(6)
-                                }
-                                Spacer()
-                            }
-                            .padding(.horizontal)
-                            
-                            Divider()
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                InfoRow(label: "Email", value: auth.currentUser?.email ?? "")
-                                InfoRow(label: "Chapter Class", value: p.chapterClass)
-                                InfoRow(label: "Graduation Year", value: p.graduationYear)
-                                InfoRow(label: "Major/Industry", value: p.majorOrIndustry)
-                            }
-                            .padding(.horizontal)
-                            
-                            Divider()
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Skills")
-                                    .font(.headline)
-                                FlowLayout(spacing: 8) {
-                                    ForEach(p.skills) { skill in
-                                        Text(skill.label)
-                                            .font(.subheadline)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(Color.green.opacity(0.2))
-                                            .cornerRadius(8)
+                                    Text("Skills")
+                                        .font(.headline)
+                                    FlowLayout(spacing: 8) {
+                                        ForEach(p.skills) { skill in
+                                            Text(skill.label)
+                                                .font(.subheadline)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(Color.green.opacity(0.2))
+                                                .cornerRadius(8)
+                                        }
                                     }
                                 }
-                            }
-                            .padding(.horizontal)
-                            
-                            Divider()
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Bio")
-                                    .font(.headline)
-                                Text(p.shortBio)
-                                    .font(.body)
-                            }
-                            .padding(.horizontal)
-                            
-                            Divider()
-                            
-                            // Edit button
-                            Button {
-                                showEditProfile = true
-                            } label: {
-                                Text("Edit Profile")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .foregroundStyle(.white)
-                                    .cornerRadius(12)
-                            }
-                            .padding(.horizontal)
-                            
-                            // Logout button
-                            Button(role: .destructive) {
-                                showLogoutAlert = true
-                            } label: {
-                                Text("Sign Out")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.red.opacity(0.1))
-                                    .foregroundStyle(.red)
-                                    .cornerRadius(12)
-                            }
-                            .padding(.horizontal)
-                            
-                            // Debug: Reset app lock for testing
-                            #if DEBUG
-                            Divider()
-                                .padding(.vertical, 8)
-                            
-                            Text("Debug Options")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                                 .padding(.horizontal)
-                            
-                            Button {
-                                showResetLockAlert = true
-                            } label: {
-                                Text("Reset App Lock (Test HELLOPANDA)")
-                                    .font(.subheadline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.orange.opacity(0.1))
-                                    .foregroundStyle(.orange)
-                                    .cornerRadius(12)
+                                
+                                Divider()
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Bio")
+                                        .font(.headline)
+                                    Text(p.shortBio)
+                                        .font(.body)
+                                }
+                                .padding(.horizontal)
+                                
+                                Divider()
+                                
+                                // Edit button
+                                Button {
+                                    showEditProfile = true
+                                } label: {
+                                    Text("Edit Profile")
+                                        .font(.headline)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Color.blue)
+                                        .foregroundStyle(.white)
+                                        .cornerRadius(12)
+                                }
+                                .padding(.horizontal)
+                                
+                                // Logout button
+                                Button(role: .destructive) {
+                                    showLogoutAlert = true
+                                } label: {
+                                    Text("Sign Out")
+                                        .font(.headline)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Color.red.opacity(0.1))
+                                        .foregroundStyle(.red)
+                                        .cornerRadius(12)
+                                }
+                                .padding(.horizontal)
+                                
+                                // Debug: Reset app lock for testing
+                                #if DEBUG
+                                Divider()
+                                    .padding(.vertical, 8)
+                                
+                                Text("Debug Options")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal)
+                                
+                                Button {
+                                    showResetLockAlert = true
+                                } label: {
+                                    Text("Reset App Lock (Test HELLOPANDA)")
+                                        .font(.subheadline)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Color.orange.opacity(0.1))
+                                        .foregroundStyle(.orange)
+                                        .cornerRadius(12)
+                                }
+                                .padding(.horizontal)
+                                #endif
                             }
-                            .padding(.horizontal)
-                            #endif
+                            .padding(.vertical)
                         }
-                        .padding(.vertical)
+                        .refreshable {
+                            loadProfile()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
+                            withAnimation {
+                                proxy.scrollTo("top", anchor: .top)
+                            }
+                        }
                     }
                 } else {
                     Text("Profile not found")

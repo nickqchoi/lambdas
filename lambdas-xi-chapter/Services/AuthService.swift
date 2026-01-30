@@ -99,6 +99,14 @@ final class AuthService: ObservableObject {
                 return
             }
             
+            // Refresh Supabase client to ensure it picks up the new Clerk session for RLS
+            SupabaseConfig.refreshClient()
+            
+            // Cleanup previous realtime subscriptions to ensure a fresh start
+            Task { @MainActor in
+                await RealtimeService.shared.unsubscribeFromAll()
+            }
+            
             authState = .authenticated(user)
             debugLog("AuthService: Clerk session active for \(user.username)")
         } else if case .authenticated = authState {

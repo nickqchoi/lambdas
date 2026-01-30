@@ -56,15 +56,19 @@ struct Chat: Identifiable {
 
 // MARK: - Message
 
-/// Chat message
+/// Chat message with optional image attachment
 /// Debug: clerk_sender_id is used in Supabase RLS policies
-struct Message: Identifiable {
+/// Debug: Codable conformance is in SupabaseCoding.swift
+struct Message: Identifiable, Equatable {
     var id: UUID
     var chatId: UUID
     var senderId: UUID                  // Legacy UUID reference for profile lookups
     var clerkSenderId: String           // Clerk user ID for RLS (format: user_xxxxx)
     var body: String
+    var imageURL: URL?                  // Optional attached image URL from Supabase Storage
+    var type: MessageType               // Type of message (text, image, system)
     var sentAt: Date
+    var metadata: [String: String]?     // Optional metadata (e.g. bountyId)
 
     /// Debug: Initialize message with both senderId and clerkSenderId
     init(
@@ -73,13 +77,51 @@ struct Message: Identifiable {
         senderId: UUID,
         clerkSenderId: String = "",
         body: String,
-        sentAt: Date = Date()
+        imageURL: URL? = nil,
+        type: MessageType = .text,
+        sentAt: Date = Date(),
+        metadata: [String: String]? = nil
     ) {
         self.id = id
         self.chatId = chatId
         self.senderId = senderId
         self.clerkSenderId = clerkSenderId
         self.body = body
+        self.imageURL = imageURL
+        self.type = type
         self.sentAt = sentAt
+        self.metadata = metadata
+    }
+    
+    // MARK: - Equatable
+    
+    static func == (lhs: Message, rhs: Message) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Whether this message has an image attachment
+    var hasImage: Bool {
+        imageURL != nil
+    }
+    
+    /// Message preview for notifications (truncated)
+    var preview: String {
+        switch type {
+        case .image:
+            return "📷 Photo"
+        case .system:
+            return body // Return the actual text (e.g. "Bounty started")
+        case .text:
+            return String(body.prefix(50)) + (body.count > 50 ? "..." : "")
+        }
     }
 }
+
+enum MessageType: String, Codable {
+    case text
+    case image
+    case system
+}
+

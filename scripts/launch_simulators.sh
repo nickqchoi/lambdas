@@ -4,6 +4,8 @@
 SCHEME="lambdas-xi-chapter"
 APP_NAME="lambdas-xi-chapter"
 DERIVED_DATA_PATH="./build"
+# Hardcode the bundle ID since we know it
+BUNDLE_ID="Nicholas.lambdas-xi-chapter"
 
 # 1. Boot Simulators
 echo "Booting simulators..."
@@ -20,7 +22,7 @@ xcodebuild -scheme "$SCHEME" \
   clean build | xcbeautify || true 
 
 # Find the .app path
-APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" | head -n 1)
+APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Debug-iphonesimulator/*" | head -n 1)
 
 if [ -z "$APP_PATH" ]; then
     echo "Error: Could not find .app bundle. Build failed."
@@ -28,9 +30,6 @@ if [ -z "$APP_PATH" ]; then
 fi
 
 echo "Found app at: $APP_PATH"
-
-# 3. Get Bundle Identifier
-BUNDLE_ID=$(defaults read "$APP_PATH/Info.plist" CFBundleIdentifier)
 echo "Bundle ID: $BUNDLE_ID"
 
 # 4. Install and Launch on both devices
@@ -51,3 +50,6 @@ for DEVICE_NAME in "${DEVICES[@]}"; do
 done
 
 echo "Done! App should be running on both simulators."
+echo ""
+echo "To view logs, run:"
+echo "  xcrun simctl spawn 'iPhone 17' log stream --level debug --predicate 'subsystem == \"lambdas-xi-chapter\"'"

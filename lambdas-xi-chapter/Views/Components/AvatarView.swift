@@ -9,12 +9,14 @@ import SwiftUI
 import Kingfisher
 
 struct AvatarView: View {
+    let image: UIImage?
     let photoURL: String?
     let initials: String
     let size: CGFloat
     let backgroundColor: Color
     
-    init(photoURL: String?, initials: String, size: CGFloat = 40, backgroundColor: Color = .blue.opacity(0.2)) {
+    init(image: UIImage? = nil, photoURL: String?, initials: String, size: CGFloat = 40, backgroundColor: Color = .blue.opacity(0.2)) {
+        self.image = image
         self.photoURL = photoURL
         self.initials = initials
         self.size = size
@@ -23,7 +25,13 @@ struct AvatarView: View {
     
     var body: some View {
         Group {
-            if let urlString = photoURL, let url = URL(string: urlString) {
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+            } else if let urlString = photoURL, let url = URL(string: urlString) {
                 KFImage(url)
                     .resizable()
                     .placeholder {

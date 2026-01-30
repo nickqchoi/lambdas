@@ -32,15 +32,29 @@ struct NewsView: View {
                     }
                     .padding()
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(posts) { post in
-                                NewsCardView(post: post) {
-                                    selectedPost = post
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                // Invisible anchor for scrolling to top
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("top")
+                                
+                                ForEach(posts) { post in
+                                    NewsCardView(post: post) {
+                                        selectedPost = post
+                                    }
                                 }
                             }
+                            .padding()
                         }
-                        .padding()
+                        .refreshable {
+                            loadPosts()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
+                            withAnimation {
+                                proxy.scrollTo("top", anchor: .top)
+                            }
+                        }
                     }
                 }
             }

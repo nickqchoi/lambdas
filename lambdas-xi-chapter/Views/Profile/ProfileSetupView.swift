@@ -27,6 +27,7 @@ struct ProfileSetupView: View {
     
     // Photo Selection
     @State private var selectedItem: PhotosPickerItem?
+    @State private var selectedImage: UIImage?
     @State private var profilePhotoURL: String?
     @State private var isUploadingPhoto = false
 
@@ -39,6 +40,7 @@ struct ProfileSetupView: View {
                         Spacer()
                         VStack {
                             AvatarView(
+                                image: selectedImage,
                                 photoURL: profilePhotoURL,
                                 initials: fullName.isEmpty ? (auth.currentUser?.username ?? "U") : fullName,
                                 size: 100
@@ -153,6 +155,11 @@ struct ProfileSetupView: View {
                     guard let data = try? await newItem?.loadTransferable(type: Data.self),
                           let userId = auth.currentUser?.clerkId
                     else { return }
+                    
+                    // Set local image immediately for optimistic UI
+                    if let uiImage = UIImage(data: data) {
+                        await MainActor.run { selectedImage = uiImage }
+                    }
                     
                     isUploadingPhoto = true
                     do {

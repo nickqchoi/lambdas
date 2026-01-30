@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @StateObject private var notificationService = InAppNotificationService.shared
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -43,6 +44,11 @@ struct MainTabView: View {
                 .tag(4)
         }
         .tint(Color.appPrimary)
+        .onChange(of: notificationService.navigateToChat) { _, chatId in
+            if chatId != nil {
+                selectedTab = 1 // Switch to Messages tab
+            }
+        }
     }
 }
 

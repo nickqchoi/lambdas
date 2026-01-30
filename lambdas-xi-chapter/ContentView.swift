@@ -30,6 +30,8 @@ struct ContentView: View {
             } else {
                 // Step 4: Main app
                 MainTabView()
+                    .withNotificationBanner()
+                    .withNotificationBanner()
                     .onAppear {
                         // Debug: Only seed mock data if Supabase is NOT configured
                         if SupabaseConfig.client == nil, let clerkId = auth.currentUser?.clerkId {
@@ -85,6 +87,8 @@ struct ContentView: View {
             profileComplete = false
             profileChecked = true
             debugLog("ContentView: no user, profile not complete")
+            // Ensure we clean up realtime subscriptions if no user
+            await RealtimeService.shared.unsubscribeFromAll()
             return
         }
         
@@ -96,6 +100,9 @@ struct ContentView: View {
         if let p = profile {
             profileComplete = profileService.isProfileComplete(p)
             debugLog("ContentView: profile found, complete=\(profileComplete)")
+            
+            // Setup RealtimeService now that we have a profile ID
+            await setupRealtime(profile: p)
         } else {
             // No profile exists yet
             profileComplete = false
@@ -103,6 +110,25 @@ struct ContentView: View {
         }
         
         profileChecked = true
+    }
+    
+    // MARK: - Realtime Setup
+    
+    /// Setup RealtimeService with current user's profile
+    /// Debug: Ensures subscriptions are established only after we know who the user is
+    private func setupRealtime(profile: Profile) async {
+        debugLog("ContentView: setting up realtime for profile \(profile.id)")
+        
+        // 1. Set current user ID for filtering
+        RealtimeService.shared.setCurrentUser(profileId: profile.id)
+        
+        // 2. Subscribe to bounty events
+        await RealtimeService.shared.subscribeToBountyEvents()
+        
+        // 3. Subscribe to global messages
+        await RealtimeService.shared.subscribeToAllMessages()
+        
+        debugLog("ContentView: realtime setup complete")
     }
 }
 

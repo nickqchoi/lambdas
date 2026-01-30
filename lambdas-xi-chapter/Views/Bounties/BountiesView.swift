@@ -34,15 +34,29 @@ struct BountiesView: View {
                     }
                     .padding()
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(bounties) { bounty in
-                                BountyCardView(bounty: bounty) {
-                                    selectedBounty = bounty
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                // Invisible anchor for scrolling to top
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("top")
+                                
+                                ForEach(bounties) { bounty in
+                                    BountyCardView(bounty: bounty) {
+                                        selectedBounty = bounty
+                                    }
                                 }
                             }
+                            .padding()
                         }
-                        .padding()
+                        .refreshable {
+                            loadBounties()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
+                            withAnimation {
+                                proxy.scrollTo("top", anchor: .top)
+                            }
+                        }
                     }
                 }
             }
@@ -95,9 +109,9 @@ struct BountyCardView: View {
     
     var statusColor: Color {
         switch bounty.status {
-        case .open: return .green
+        case .open: return .appPrimary
         case .inProgress: return .orange
-        case .completed: return .gray
+        case .completed: return .green
         }
     }
     
@@ -480,10 +494,17 @@ struct BountyDetailView: View {
                             Text("Applications (\(applications.count))")
                                 .font(.headline)
                             ForEach(applications) { app in
-                                ApplicationRow(application: app, bounty: currentBounty) {
-                                    await refreshBounty()
-                                    onUpdate()
-                                }
+                                ApplicationRow(
+                                    application: app,
+                                    bounty: currentBounty,
+                                    onUpdate: {
+                                        await refreshBounty()
+                                        onUpdate()
+                                    },
+                                    onDismiss: {
+                                        dismiss()
+                                    }
+                                )
                             }
                         }
                     }
@@ -548,13 +569,14 @@ struct BountyDetailView: View {
                 loadApplications()
             }
         }
+        .withNotificationBanner()
     }
     
     private var statusColor: Color {
         switch currentBounty.status {
-        case .open: return .green
+        case .open: return .appPrimary
         case .inProgress: return .orange
-        case .completed: return .gray
+        case .completed: return .green
         }
     }
     
@@ -585,6 +607,7 @@ struct ApplicationRow: View {
     let application: BountyApplication
     let bounty: Bounty
     let onUpdate: () async -> Void
+    var onDismiss: (() -> Void)? = nil
     
     @StateObject private var profileService = ProfileService.shared
     @StateObject private var bountyService = BountyService.shared
@@ -612,8 +635,16 @@ struct ApplicationRow: View {
                     if bounty.status == .open {
                         Button("Accept") {
                             Task {
-                                try? await bountyService.acceptApplication(bountyId: bounty.id, applicationId: application.id, applicantId: application.applicantId)
-                                await onUpdate()
+                                if let chat = try? await bountyService.acceptApplication(bountyId: bounty.id, applicationId: application.id, applicantId: application.applicantId) {
+                                    await onUpdate()
+                                    // Trigger navigation to the chat
+                                    await MainActor.run {
+                                        InAppNotificationService.shared.navigateToChat = chat.id
+                                        // Dismiss the presented sheet (BountyDetailView)
+                                        // Trigger dismissal first, then navigation happens via the global state change
+                                        onDismiss?()
+                                    }
+                                }
                             }
                         }
                         .buttonStyle(.borderedProminent)

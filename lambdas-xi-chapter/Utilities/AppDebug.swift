@@ -7,8 +7,10 @@
 
 import Foundation
 
+/// Debug log that outputs to NSLog (always visible in Console/logs)
 func debugLog(_ message: String) {
     #if DEBUG
-    print("[LPhiE] \(message)")
+    // NSLog always appears in logs - more reliable than print() or os_log for debugging
+    NSLog("[LPhiE] %@", message)
     #endif
 }

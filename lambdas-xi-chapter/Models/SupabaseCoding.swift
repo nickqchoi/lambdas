@@ -179,9 +179,10 @@ extension Chat: Codable {
 
 // MARK: - Message
 // Debug: Message now uses clerk_sender_id for Clerk authentication integration
+// Debug: Added image_url for photo attachments
 extension Message: Codable {
     enum MessageCodingKeys: String, CodingKey {
-        case id, chat_id, sender_id, clerk_sender_id, body, sent_at
+        case id, chat_id, sender_id, clerk_sender_id, body, image_url, sent_at, message_type, metadata
     }
 
     init(from decoder: Decoder) throws {
@@ -192,7 +193,13 @@ extension Message: Codable {
         // Debug: clerk_sender_id is the Clerk user ID for RLS
         clerkSenderId = try c.decodeIfPresent(String.self, forKey: .clerk_sender_id) ?? ""
         body = try c.decode(String.self, forKey: .body)
+        // Debug: image_url is optional, from Supabase Storage
+        imageURL = try c.decodeIfPresent(URL.self, forKey: .image_url)
         sentAt = try c.decode(Date.self, forKey: .sent_at)
+        // Debug: decode type, default to text if missing
+        type = try c.decodeIfPresent(MessageType.self, forKey: .message_type) ?? .text
+        // Debug: decode metadata
+        metadata = try c.decodeIfPresent([String: String].self, forKey: .metadata)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -203,7 +210,13 @@ extension Message: Codable {
         // Debug: clerk_sender_id must be set for RLS policies
         try c.encode(clerkSenderId, forKey: .clerk_sender_id)
         try c.encode(body, forKey: .body)
+        // Debug: Only encode image_url if present
+        try c.encodeIfPresent(imageURL, forKey: .image_url)
         try c.encode(sentAt, forKey: .sent_at)
+        // Debug: encode type
+        try c.encode(type, forKey: .message_type)
+        // Debug: encode metadata
+        try c.encodeIfPresent(metadata, forKey: .metadata)
     }
 }
 
